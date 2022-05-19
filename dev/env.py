@@ -20,20 +20,32 @@ class SchedulingEnv(Env):
         self.count_shifts = len(schedule)
         self.shift_number = 0
         
-        ## SPACES
         # action space: Employees we can assign to shifts
         self.action_space = Discrete(self.count_workers)
+        # observation space: the latest state matrix
+        self.observation_space = Box(low=0, high=1, shape=(self.state.shape[0], self.state.shape[0]),\
+                                     dtype=np.float64)
 
  
     def step(self, action):
-        
+        """Step through the environment and implement action.
+
+        :param action: the action returned by the policy; a employee to assign to a shift.
+        :type action: int
+
+        :returns:
+            -self.state (:py:class:`numpy.ndarray`) - the state matrix updated following the action taken
+            -reward (:py:class:`int`) - the reward follwing the action. No reward if done = False
+            -done (:py:class:`boolean`) - flag to indicate whether the episode is complete
+            -info (:py:class:`int`) - ?
+        """
+    
         # assign worker
         self.state[self.shift_number,(self.shift_features+action)] = 1
 
-
         # done
-        filled_check = self.state[:,self.shift_features:].sum() 
-        if filled_check < self.count_shifts:
+        all_shifts_assigned_check = self.state[:,self.shift_features:].sum() 
+        if all_shifts_assigned_check < self.count_shifts:
             done = False
             self.shift_number += 1
         else:

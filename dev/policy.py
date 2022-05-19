@@ -93,18 +93,5 @@ class Policy(nn.Module):
         return self.probs
 
 
-state = np.array([[0, 0, 0, 0, 1, 1, 0],
-                  [1, 0, 0, 0, 0, 0, 1],
-                  [0, 1, 0, 1, 1, 1, 0],
-                  [0, 0, 1, 1, 0, 0, 0]])
-
-encoder = Encoder(4, 32, 32)
-decoder = Decoder()
-policy = Policy(state, encoder, decoder)
-
-policy.forward()
-
-
-
 
 
