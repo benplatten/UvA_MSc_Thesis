@@ -23,7 +23,7 @@ class SchedulingEnv(Env):
         # action space: Employees we can assign to shifts
         self.action_space = Discrete(self.count_workers)
         # observation space: the latest state matrix
-        self.observation_space = Box(low=0, high=1, shape=(self.state.shape[0], self.state.shape[0]),\
+        self.observation_space = Box(low=0, high=1, shape=(self.state.shape[0], self.state.shape[1]),\
                                      dtype=np.float64)
 
  
@@ -51,7 +51,14 @@ class SchedulingEnv(Env):
         else:
             done = True
         
-        # reward  
+        # reward 
+        # 
+        # 0 - 1
+        # 0.6 1 constraint violation
+        # 0.4 2 constraint violations
+        # look at baseline options in SB 
+
+
         if done == False:
              reward = 0
         

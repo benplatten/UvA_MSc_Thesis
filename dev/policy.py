@@ -40,7 +40,6 @@ class Decoder(nn.Module):
         return self.softmax(norm_scores)
 
 
-
 class Policy(nn.Module):    
     def __init__(self, state, encoder, decoder):
         super(Policy, self).__init__() 
