@@ -7,7 +7,7 @@ def plot_learning_curve(scores, x, filename):
         running_avg[i] = np.mean(scores[max(0, i-100):(i+1)])
     plt.plot(x, running_avg)
     plt.title('Running average of previous 100 scores')
-    plt.savefig(f'plots/{filename}_lc.png')
+    plt.savefig(f'dev/plots/{filename}_lc.png')
 
 def plot_scores(scores, filename):
     fig = plt.figure()
@@ -15,4 +15,4 @@ def plot_scores(scores, filename):
     plt.plot(np.arange(1, len(scores)+1), scores)
     plt.ylabel('Score')
     plt.xlabel('Episode #')
-    plt.savefig(f'plots/{filename}.png')
+    plt.savefig(f'dev/plots/{filename}.png')
