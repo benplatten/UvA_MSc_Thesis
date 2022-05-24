@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 import numpy as np
 import math
 
@@ -90,6 +91,12 @@ class Policy(nn.Module):
         self.probs = self.decoder(encoded_graph,self.shift_index)
 
         return self.probs
+    
+    def act(self):
+        probs = self.forward()
+        model = Categorical(probs)
+        action = model.sample()
+        return action.item(), model.log_prob(action)
 
 
 

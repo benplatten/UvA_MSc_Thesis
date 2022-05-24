@@ -1,3 +1,4 @@
+from sre_parse import State
 from xmlrpc.client import Boolean
 from gym import Env
 from gym.spaces import Discrete, Box, Dict, MultiBinary
@@ -52,18 +53,13 @@ class SchedulingEnv(Env):
             done = True
         
         # reward 
-        # 
-        # 0 - 1
-        # 0.6 1 constraint violation
-        # 0.4 2 constraint violations
-        # look at baseline options in SB 
-
-
+        # 0 - constraint violations
+        # 1 - no constraint violations
+ 
         if done == False:
              reward = 0
         
         else:
-            assignment_reward = self.count_shifts
             # check if an employee worked twice on the same day 
             # if so, b2b shift penalty should be applied
             b2b_penalty = 0
@@ -71,7 +67,15 @@ class SchedulingEnv(Env):
                                 self.state[:,self.shift_features][0:2].sum() > 1 else 0
             b2b_penalty += 1 if self.state[:,self.shift_features][2:4].sum() == 0 or \
                                 self.state[:,self.shift_features][2:4].sum() > 1  else 0
-            reward = assignment_reward - (b2b_penalty) 
+            
+            if b2b_penalty > 0:
+                reward = 0
+            else:
+                reward = 1
+
+            print('summary:')
+            print(self.state)
+            print(reward)
 
         # info placeholder
         info = {}
@@ -83,6 +87,11 @@ class SchedulingEnv(Env):
         pass
     
     def reset(self):
+        """Reset the environment to the starting state.
+
+        :return: starting state matrix
+        :rtype: numpy.array
+        """
         self.shift_number = 0
         self.state = self.schedule.to_numpy()
         return self.state
