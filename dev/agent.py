@@ -3,18 +3,17 @@ import torch
 from collections import deque
 
 class reinforce():
-    def __init__(self, policy, optimizer, max_t=1000, gamma=1.0, print_every=100):
+    def __init__(self, policy, optimizer, max_t=1000, gamma=1.0):
         self.policy = policy
         self.optimizer = optimizer
         self.max_t = max_t
         self.gamma = gamma
-        self.print_every = print_every
 
-    def run(self, env, n_episodes=1000):
+    def run(self, env, n_episodes=1000, print_every=100):
         scores_deque = deque(maxlen=100)
         scores = []
         for e in range(1, n_episodes):
-            print(f"episode: {e}")
+            #print(f"episode: {e}")
             saved_log_probs = []
             rewards = []
             state = env.reset()
@@ -48,9 +47,13 @@ class reinforce():
             policy_loss.backward(retain_graph=True)
             self.optimizer.step()
             
-            if e % self.print_every == 0:
+            if e % print_every == 0:
                 print('Episode {}\tAverage Score: {:.2f}'.format(e, np.mean(scores_deque)))
-            if np.mean(scores_deque) >= 195.0:
+                print(env.state)
+            if np.mean(scores_deque) >= 0.8:
                 print('Environment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(e - 100, np.mean(scores_deque)))
                 break
+
+ 
+                
         return scores
