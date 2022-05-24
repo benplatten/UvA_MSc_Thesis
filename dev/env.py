@@ -1,7 +1,5 @@
-from sre_parse import State
-from xmlrpc.client import Boolean
 from gym import Env
-from gym.spaces import Discrete, Box, Dict, MultiBinary
+from gym.spaces import Discrete, Box
 import numpy as np
 import pandas as pd
 
@@ -73,9 +71,9 @@ class SchedulingEnv(Env):
             else:
                 reward = 1
 
-            print('summary:')
-            print(self.state)
-            print(reward)
+            #print('summary:')
+            #print(self.state)
+            #print(reward)
 
         # info placeholder
         info = {}
