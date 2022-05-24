@@ -5,6 +5,7 @@ from agent import reinforce
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from datetime import datetime
+from util import plot_scores, plot_learning_curve
 
 now = datetime.now().strftime("%Y-%m-%d-%H:%M")
 
@@ -21,12 +22,13 @@ policy = Policy(env.state, encoder, decoder).to(device)
 
 optimizer = optim.Adam(policy.parameters(), lr=1e-2)
 agent = reinforce(policy, optimizer,max_t=5)
-scores = agent.run(env,n_episodes=20)
+n_episodes = 1000
+scores = agent.run(env,n_episodes=n_episodes,print_every=10)
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.plot(np.arange(1, len(scores)+1), scores)
-plt.ylabel('Score')
-plt.xlabel('Episode #')
-plt.savefig(f'plots/Reinforce_SchedulingEnv_{now}.png')
-#plt.show() 
+
+filename = f"Reinforce_SchedulingEnv_{now}"
+
+x = [i+1 for i in range(n_episodes -1)]
+#plot_scores(scores, filename)
+plot_learning_curve(scores, x, filename)
+
