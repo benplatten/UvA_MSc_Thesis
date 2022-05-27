@@ -1,6 +1,6 @@
 
 import dgl
-from dgl.nn import GraphConv
+from dgl.nn import GINConv
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -15,8 +15,10 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.shift_embedding = nn.Linear(5,in_feats)
         self.worker_embedding = nn.Linear(2,in_feats)
-        self.conv1 = GraphConv(in_feats, h_feats)
-        self.conv2 = GraphConv(h_feats, out_feats)
+        lin = nn.Linear(in_feats, h_feats)
+        lin2 = nn.Linear(h_feats, out_feats)
+        self.conv1 = GINConv(lin,aggregator_type='mean')
+        self.conv2 = GINConv(lin2,aggregator_type='mean')
 
     def forward(self, g, in_feat):
         h = self.conv1(g, in_feat)
@@ -42,17 +44,17 @@ class Decoder(nn.Module):
 
 
 class Policy(nn.Module):    
-    def __init__(self, state, encoder, decoder):
+    def __init__(self, encoder, decoder):
         super(Policy, self).__init__() 
-        self.state = torch.from_numpy(state).float()
+        #self.state = torch.from_numpy(state).float()
         self.shift_feature_count = 5    # (num shifts - 1) + num features (2: time of day, day of week)
-        self.shift_index = (torch.sum(self.state[:,self.shift_feature_count:],1) == 0).nonzero(as_tuple=True)[0][0]
+        #self.shift_index = 0
         self.encoder = encoder 
         self.decoder = decoder
-        self.g =  self.grapher()
+        #self.g =  self.grapher()
         
 
-    def grapher(self): 
+    def grapher(self, state): 
         """
         Creates worker features matrix
         Creates worker and shift feature embeddings
@@ -61,18 +63,22 @@ class Policy(nn.Module):
         Creates hetergraph from shift and worker nodes
         Returns a bipartite graph
         """
-        num_workers = len(self.state[0,self.shift_feature_count:])
+
+        state = torch.from_numpy(state).float()
+
+        num_workers = len(state[0,self.shift_feature_count:])
         a = np.arange(0,num_workers,1)
         w_features = np.zeros((a.size, a.max()+1))
         w_features[np.arange(a.size),a] = 1
         t_w_features = torch.from_numpy(w_features).float()
 
-        embedded_s = self.encoder.shift_embedding(self.state[:,:self.shift_feature_count])
+        embedded_s = self.encoder.shift_embedding(state[:,:self.shift_feature_count])
         embedded_w = self.encoder.worker_embedding(t_w_features) 
 
+
         edge_tuples = []
-        for i in range(len(self.state[:,0])):
-            for j in range(len(self.state[0,self.shift_feature_count:])):
+        for i in range(len(state[:,0])):
+            for j in range(len(state[0,self.shift_feature_count:])):
                 edge_tuples.append((i,j))
 
         s_graph = dgl.heterograph(
@@ -84,17 +90,22 @@ class Policy(nn.Module):
         hg = dgl.to_homogeneous(s_graph,['x'])
         bg = dgl.to_bidirected(hg,['x'])
 
-        return bg 
+        shift_index = (torch.sum(state[:,self.shift_feature_count:],1) == 0).nonzero(as_tuple=True)[0][0]
 
-    def forward(self):
-        encoded_graph = self.encoder(self.g, self.g.ndata['x'])
-        self.probs = self.decoder(encoded_graph,self.shift_index)
+        return bg, shift_index
+
+    def forward(self, state):
+        graph, shift_index = self.grapher(state)
+        encoded_graph = self.encoder(graph, graph.ndata['x'])
+        self.probs = self.decoder(encoded_graph, shift_index)
 
         return self.probs
     
-    def act(self):
-        probs = self.forward()
+    def act(self, state):
+        probs = self.forward(state)
+
         model = Categorical(probs)
+
         action = model.sample()
         return action.item(), model.log_prob(action)
 

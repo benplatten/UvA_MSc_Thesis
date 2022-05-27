@@ -20,7 +20,7 @@ class reinforce():
             # Collect trajectory
             for t in range(self.max_t):
                 # Sample the action from current policy
-                action, log_prob = self.policy.act()
+                action, log_prob = self.policy.act(state)
                 saved_log_probs.append(log_prob)
                 state, reward, done, _ = env.step(action)
                 rewards.append(reward)

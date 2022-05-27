@@ -15,9 +15,9 @@ env = SchedulingEnv(pool, schedule)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-encoder = Encoder(4, 32, 32)
+encoder = Encoder(32, 32, 32)
 decoder = Decoder()
-policy = Policy(env.state, encoder, decoder).to(device)
+policy = Policy(encoder, decoder).to(device)
 
 optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
 agent = reinforce(policy, optimizer,max_t=1000,gamma=1)
@@ -35,8 +35,11 @@ x = [i+1 for i in range(n_episodes -1)]
 plot_learning_curve(scores, x, filename)
 
 
-# mlfow (or tensorboard?)
-# hyperparameters:
+
+# Tracking
+# mlfow or tensorboard?
+#
+# Hyperparameters:
 #   max_t
 #   lr
 #   n_episodes
