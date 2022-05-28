@@ -50,9 +50,9 @@ class reinforce():
             if e % print_every == 0:
                 print('Episode {}\tAverage Score: {:.2f}'.format(e, np.mean(scores_deque)))
                 print(env.state)
-            if np.mean(scores_deque) >= 0.8:
-                print('Environment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(e - 100, np.mean(scores_deque)))
-                break
+            #if np.mean(scores_deque) >= 0.8:
+            #    print('Environment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(e - 100, np.mean(scores_deque)))
+            #    break
   
         return scores
 

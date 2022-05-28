@@ -60,13 +60,12 @@ class SchedulingEnv(Env):
         else:
             # check if an employee worked twice on the same day 
             # if so, b2b shift penalty should be applied
-            b2b_penalty = 0
-            b2b_penalty += 1 if self.state[:,self.shift_features][0:2].sum() == 0 or \
-                                self.state[:,self.shift_features][0:2].sum() > 1 else 0
-            b2b_penalty += 1 if self.state[:,self.shift_features][2:4].sum() == 0 or \
-                                self.state[:,self.shift_features][2:4].sum() > 1  else 0
+            count_b2b = 0
+
+            for i in range(self.count_workers):
+                count_b2b += self.check_b2b(self.state[:,self.shift_features+i])
             
-            if b2b_penalty > 0:
+            if count_b2b > 0:
                 reward = 0
             else:
                 reward = 1
@@ -93,3 +92,16 @@ class SchedulingEnv(Env):
         self.shift_number = 0
         self.state = self.schedule.to_numpy()
         return self.state
+
+    def check_b2b(self, worker_array):
+        countb2b=0
+        count=0
+        for i in range(len(worker_array)):
+            if worker_array[i]==1:
+                count=count+1
+                if count > 1:
+                    countb2b += 1                       
+            else:
+                count=0
+
+        return countb2b
