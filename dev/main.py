@@ -9,7 +9,7 @@ from util import plot_scores, plot_learning_curve
 start=datetime.now()
 now = datetime.now().strftime("%Y%m%d%H:%M")
 p = "pool_0001"
-s = "schedule_0003"
+s = "schedule_0001"
 
 pool, schedule = pd.read_csv(f'dev/pools/{p}.csv',dtype={'employee_id':'str'}), \
                  pd.read_csv(f'dev/schedules/{s}.csv',dtype={'shift_id':'str'})
@@ -17,8 +17,8 @@ pool, schedule = pd.read_csv(f'dev/pools/{p}.csv',dtype={'employee_id':'str'}), 
 env = SchedulingEnv(pool, schedule)
 
 #print(env.shift_features)
-print(env.count_workers)
-print(env.count_shifts)
+#print(env.count_shifts)
+#print(env.count_workers)
 #print(env.state) 
 #print(env.action_space.sample())
 
@@ -36,8 +36,7 @@ scores = agent.run(env,n_episodes=n_episodes,print_every=1000)
 #agent = randomAgent()
 #scores = agent.run(env, n_episodes)
 
-
-filename = f"Reinforce_SchedEnv_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
+filename = f"rf3_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
 
 x = [i+1 for i in range(n_episodes -1)]
 #plot_scores(scores, filename)
@@ -45,6 +44,7 @@ plot_learning_curve(scores, x, filename)
 
 print(f"time to complete: {datetime.now() - start}")
 
+ 
 # Tracking
 # mlfow or tensorboard?
 #

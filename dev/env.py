@@ -18,6 +18,8 @@ class SchedulingEnv(Env):
         self.count_workers = len(pool)
         self.count_shifts = len(schedule)
         self.shift_number = 0
+        self.reward_step = 0
+        self.cum_reward = 0
         
         # action space: Employees we can assign to shifts
         self.action_space = Discrete(self.count_workers)
@@ -50,29 +52,43 @@ class SchedulingEnv(Env):
         else:
             done = True
         
-        # reward 
+        # reward function 1
         # 0 - constraint violations
         # 1 - no constraint violations
+
+        # reward function 2
+        # 1-(count_b2b / num shifts) - constraint violations
+        # 1 - no constraint violations
+
+        # reward function 3
+        # 1/num shifts for each acceptable assignment
+
+
+        #print(f"reward_step:{self.reward_step}")
+        #print(f"shift_num:{self.shift_number}")
+        #print(self.state)
  
-        if done == False:
-             reward = 0
+        if self.reward_step == 0:
+            reward = 0
+            #print(f"reward:{reward}")
         
         else:
-            # check if an employee worked twice on the same day 
-            # if so, b2b shift penalty should be applied
-            count_b2b = 0
+            step_b2bs = 0 
+            #print(state[self.shift_number-1:self.shift_number+1,self.shift_features:])
+            for i in range(self.state[self.reward_step-1:self.reward_step+1,self.shift_features:].shape[1]):
+                step = self.state[self.reward_step-1:self.reward_step+1,self.shift_features:][:,i]
+                #print(step)
+                step_b2bs += self.check_b2b(step)
 
-            for i in range(self.count_workers):
-                count_b2b += self.check_b2b(self.state[:,self.shift_features+i])
-            
-            if count_b2b > 0:
-                reward = 0
-            else:
-                reward = 1
 
-            #print('summary:')
-            #print(self.state)
-            #print(reward)
+            reward = (1/(self.count_shifts-1)) - (step_b2bs /(self.count_shifts-1))
+            #print(f"reward:{reward}")
+
+        self.reward_step += 1
+        self.cum_reward += reward
+
+        #if done:
+            #print(f"episode reward: {self.cum_reward}")
 
         # info placeholder
         info = {}
@@ -90,6 +106,8 @@ class SchedulingEnv(Env):
         :rtype: numpy.array
         """
         self.shift_number = 0
+        self.reward_step = 0
+        self.cum_reward = 0
         self.state = self.schedule.to_numpy()
         return self.state
 
