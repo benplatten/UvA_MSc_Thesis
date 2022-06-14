@@ -19,7 +19,7 @@ env = SchedulingEnv(pool, schedule)
 #print(env.shift_features)
 #print(env.count_shifts)
 #print(env.count_workers)
-#print(env.state) 
+print(env.state) 
 #print(env.action_space.sample())
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -30,13 +30,13 @@ policy = Policy(encoder, decoder).to(device)
 
 optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
 agent = reinforce(policy, optimizer,max_t=1000,gamma=1)
-n_episodes = 10000
+n_episodes = 2
 scores = agent.run(env,n_episodes=n_episodes,print_every=1000)
 
 #agent = randomAgent()
 #scores = agent.run(env, n_episodes)
 
-filename = f"rf3_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
+filename = f"rf5_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
 
 x = [i+1 for i in range(n_episodes -1)]
 #plot_scores(scores, filename)

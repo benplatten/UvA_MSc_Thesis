@@ -25,6 +25,7 @@ class Encoder(nn.Module):
         h = self.conv1(g, in_feat)
         h = F.relu(h)
         h = self.conv2(g, h)
+        print(h)
         g.ndata['h'] = h
         return g 
 

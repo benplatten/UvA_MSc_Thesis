@@ -63,6 +63,14 @@ class SchedulingEnv(Env):
         # reward function 3
         # 1/num shifts for each acceptable assignment
 
+        # reward function 4
+        # end episode if b2b contraint broken 
+
+        # reward function 5
+        # 0 reward if b2b contraint broken 
+
+        #
+
 
         #print(f"reward_step:{self.reward_step}")
         #print(f"shift_num:{self.shift_number}")
@@ -74,14 +82,18 @@ class SchedulingEnv(Env):
         
         else:
             step_b2bs = 0 
-            #print(state[self.shift_number-1:self.shift_number+1,self.shift_features:])
             for i in range(self.state[self.reward_step-1:self.reward_step+1,self.shift_features:].shape[1]):
                 step = self.state[self.reward_step-1:self.reward_step+1,self.shift_features:][:,i]
                 #print(step)
                 step_b2bs += self.check_b2b(step)
 
+            if step_b2bs == 0:
+                reward = (1/(self.count_shifts-1)) 
 
-            reward = (1/(self.count_shifts-1)) - (step_b2bs /(self.count_shifts-1))
+            else: 
+                #done = True
+                #print(f"Episode ended on shift: {self.shift_number}")
+                reward = self.cum_reward * -1  
             #print(f"reward:{reward}")
 
         self.reward_step += 1
