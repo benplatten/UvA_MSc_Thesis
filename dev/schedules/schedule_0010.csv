@@ -1,0 +1,8 @@
+shift_id,shift_day_of_week,shift_type
+0,Monday,Morning
+1,Tuesday,Morning
+2,Tuesday,Evening
+3,Wednesday,Morning
+4,Wednesday,Evening
+5,Thursday,Morning
+6,Friday,Morning
