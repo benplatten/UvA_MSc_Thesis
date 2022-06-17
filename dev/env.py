@@ -2,19 +2,33 @@ from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
 import pandas as pd
+import joblib
 
 
 class SchedulingEnv(Env):
     """A personnel scheduling environment for OpenAI gym"""
 
     def __init__(self, pool, schedule):
-        schedule = pd.get_dummies(schedule,drop_first=True)
+        sfEncodings = joblib.load('dev/shiftFeatureEncoding.joblib')
+        shifts = pd.get_dummies(schedule[['shift_id']],drop_first=True)
+        sfEncoded =  sfEncodings.transform(schedule[['shift_day_of_week','shift_type']])
+        shift_features = pd.DataFrame(sfEncoded, columns=sfEncodings.get_feature_names_out())
+        schedule = pd.merge(shifts, shift_features, left_index=True, right_index=True)
+
         self.shift_features = schedule.shape[1]
+        # OR self.shift_features = shift_features.shape[1]
+
         for i in pd.get_dummies(pool).columns.to_list():
             schedule[i] = 0
         
         self.schedule = schedule
         self.state = self.schedule.to_numpy()
+
+        # sf_index may not be needed here
+        sf_start = len(schedule)-1
+        sf_end = schedule.shape[1] - len(pool)
+        self.sf_index = (sf_start,sf_end)
+
         self.count_workers = len(pool)
         self.count_shifts = len(schedule)
         self.shift_number = 0

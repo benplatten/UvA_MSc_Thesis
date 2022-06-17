@@ -82,11 +82,11 @@ def problemValidation():
 
     return dupes
 
-def problemLoader(max_shifts):
+def problemLoader(num_shifts,num_emps):
     pi = problemIndex()
     pi.head()
 
-    selectedProbs = pi[pi['shifts'] <=max_shifts] 
+    selectedProbs = pi[(pi['shifts'] == num_shifts) & (pi['employees'] == num_emps)] 
     selectedProbs
 
 
@@ -108,4 +108,6 @@ pi = problemIndex()
 pi.to_csv('problem_index.csv', index=False)
 
 dupes =  problemValidation()
+df = pd.DataFrame(dupes)
+df.to_csv('duplicate_problems.csv', index=False)
 

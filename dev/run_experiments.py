@@ -5,24 +5,34 @@ from agent import reinforce, randomAgent
 import torch.optim as optim
 from datetime import datetime
 from util import plot_scores, plot_learning_curve
-from data_utils import problemLoader
+#from data_utils import problemLoader
 
 
-max_shifts=5
-problem_batch = problemLoader(max_shifts)
+#num_shifts = 8
+#num_emps = 4
+#problem_batch = problemLoader(num_shifts,num_emps)
 # list of tuples with csv ids
+
+p = "pool_0001"
+s = "schedule_0001"
+
+pool, schedule = pd.read_csv(f'dev/scheduling_problems/pools/{p}.csv',dtype={'employee_id':'str'}), \
+                 pd.read_csv(f'dev/scheduling_problems/schedules/{s}.csv',dtype={'shift_id':'str'})
+
+env = SchedulingEnv(pool, schedule)
+
+print(env.state)
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 encoder = Encoder(env.shift_features, env.count_workers, 32, 32, 32)
 decoder = Decoder(env.count_shifts)
 policy = Policy(encoder, decoder).to(device)
 
-optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
+print('env.sf_index')
+print(env.sf_index)
 
-
-agent = reinforce(policy, optimizer,max_t=1000,gamma=1)
-n_episodes = 10
-scores = agent.run2(problem_batch,n_episodes=n_episodes,print_every=1)
+policy.grapher(env.state)
 
 
 

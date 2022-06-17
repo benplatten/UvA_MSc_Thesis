@@ -1,4 +1,6 @@
 dev/plots/
+dev/scheduling_problems/schedules/
+dev/scheduling_problems/pools/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

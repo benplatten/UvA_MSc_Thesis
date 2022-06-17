@@ -14,7 +14,7 @@ class Encoder(nn.Module):
     def __init__(self, shift_features, count_workers, in_feats, h_feats, out_feats):  
         super(Encoder, self).__init__()
         self.shift_features = shift_features
-        self.shift_embedding = nn.Linear(self.shift_features,in_feats)
+        self.shift_embedding = nn.Linear(5,in_feats)
         self.worker_embedding = nn.Linear(count_workers,in_feats)
         lin = nn.Linear(in_feats, h_feats)
         lin2 = nn.Linear(h_feats, out_feats)
@@ -66,13 +66,27 @@ class Policy(nn.Module):
         shift_feature_count = self.encoder.shift_features
 
         num_workers = len(state[0,shift_feature_count:])  # (num shifts - 1) + num features (2: time of day, day of week)
-        a = np.arange(0,num_workers,1)
-        w_features = np.zeros((a.size, a.max()+1))
-        w_features[np.arange(a.size),a] = 1
-        t_w_features = torch.from_numpy(w_features).float()
+        
+        sf_start = state.shape[0] - 1
+        sf_end = state.shape[1] - num_workers
+        
+        #a = np.arange(0,num_workers,1)
+        #w_features = np.zeros((a.size, a.max()+1))
+        #w_features[np.arange(a.size),a] = 1
+        #t_w_features = torch.from_numpy(w_features).float()
 
-        embedded_s = self.encoder.shift_embedding(state[:,:shift_feature_count])
-        embedded_w = self.encoder.worker_embedding(t_w_features) 
+        print("sf_start:sf_end")
+        print(sf_start,sf_end)
+
+        print(state[:,sf_start:sf_end])
+
+        embedded_s = self.encoder.shift_embedding(state[:,sf_start:sf_end])
+        print(embedded_s)
+        print(type(embedded_s))
+        #embedded_w = self.encoder.worker_embedding(torch.zeros(2,32)) 
+        embedded_w = torch.zeros(2,32)
+        print(embedded_w)
+    
 
 
         edge_tuples = []
