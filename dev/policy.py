@@ -15,7 +15,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.shift_features = shift_features
         self.shift_embedding = nn.Linear(5,in_feats)
-        self.worker_embedding = nn.Linear(count_workers,in_feats)
+        #self.worker_embedding = nn.Linear(count_workers,in_feats)
         lin = nn.Linear(in_feats, h_feats)
         lin2 = nn.Linear(h_feats, out_feats)
         self.conv1 = GINConv(lin,aggregator_type='mean')
@@ -25,7 +25,7 @@ class Encoder(nn.Module):
         h = self.conv1(g, in_feat)
         h = F.relu(h)
         h = self.conv2(g, h)
-        print(h)
+        #print(h)
         g.ndata['h'] = h
         return g 
 
@@ -66,23 +66,20 @@ class Policy(nn.Module):
         shift_feature_count = self.encoder.shift_features
 
         num_workers = len(state[0,shift_feature_count:])  # (num shifts - 1) + num features (2: time of day, day of week)
+        num_shifts = len(state)
         
+        # determine where the 5 shift features start and end
         sf_start = state.shape[0] - 1
         sf_end = state.shape[1] - num_workers
         
-        #a = np.arange(0,num_workers,1)
-        #w_features = np.zeros((a.size, a.max()+1))
-        #w_features[np.arange(a.size),a] = 1
-        #t_w_features = torch.from_numpy(w_features).float()
-
         embedded_s = self.encoder.shift_embedding(state[:,sf_start:sf_end])
-        #embedded_w = self.encoder.worker_embedding(torch.zeros(2,32)) 
         embedded_w = torch.zeros(num_workers,32)
 
         edge_tuples = []
         for i in range(len(state[:,0])):
             for j in range(len(state[0,shift_feature_count:])):
                 edge_tuples.append((i,j))
+
 
         s_graph = dgl.heterograph(
             {('shift', '-', 'worker') : edge_tuples})
@@ -93,7 +90,33 @@ class Policy(nn.Module):
         hg = dgl.to_homogeneous(s_graph,['x'])
         bg = dgl.to_bidirected(hg,['x'])
 
+        edges = (num_shifts * num_workers) * 2
+        #print(edges)
+        bg.edata['y'] = torch.zeros(edges)
+
         shift_index = (torch.sum(state[:,shift_feature_count:],1) == 0).nonzero(as_tuple=True)[0][0]
+
+        if shift_index > 0:
+            for i in range(shift_index):
+                # get assignment data
+                shift = i
+                assigned_emp = (state[shift,shift_feature_count:] == 1).nonzero(as_tuple=True)[0]
+                
+                # get edge ids
+                edges = bg.edges()[0]
+
+                # index for shift-emp edge
+                se_idx = (edges == shift).nonzero(as_tuple=True)[0][assigned_emp]
+
+                # index for emp-shift edge
+                emp_id = torch.unique(edges)[num_shifts:][assigned_emp]
+                es_idx = (edges == emp_id).nonzero(as_tuple=True)[0][shift]
+                
+                #save data to edges
+                bg.edges[[se_idx,es_idx]].data['y'] = torch.ones(2)
+
+        print(state)
+        print(bg.edata)
 
         return bg, shift_index
 
