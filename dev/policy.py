@@ -75,19 +75,9 @@ class Policy(nn.Module):
         #w_features[np.arange(a.size),a] = 1
         #t_w_features = torch.from_numpy(w_features).float()
 
-        print("sf_start:sf_end")
-        print(sf_start,sf_end)
-
-        print(state[:,sf_start:sf_end])
-
         embedded_s = self.encoder.shift_embedding(state[:,sf_start:sf_end])
-        print(embedded_s)
-        print(type(embedded_s))
         #embedded_w = self.encoder.worker_embedding(torch.zeros(2,32)) 
-        embedded_w = torch.zeros(2,32)
-        print(embedded_w)
-    
-
+        embedded_w = torch.zeros(num_workers,32)
 
         edge_tuples = []
         for i in range(len(state[:,0])):
