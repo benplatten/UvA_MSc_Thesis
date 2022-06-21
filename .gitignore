@@ -1,6 +1,7 @@
 dev/plots/
 dev/scheduling_problems/schedules/
 dev/scheduling_problems/pools/
+dev/tempCodeRunnerFile.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

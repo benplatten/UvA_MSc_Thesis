@@ -4,7 +4,7 @@ from policy import *
 from agent import reinforce, randomAgent
 import torch.optim as optim
 from datetime import datetime
-from util import plot_scores, plot_learning_curve
+from plot_util import plot_scores, plot_learning_curve
 #from data_utils import problemLoader
 
 
@@ -13,11 +13,14 @@ from util import plot_scores, plot_learning_curve
 #problem_batch = problemLoader(num_shifts,num_emps)
 # list of tuples with csv ids
 
-p = "pool_0001"
-s = "schedule_0001"
+p = "pool_0004"
+s = "schedule_0020"
 
 pool, schedule = pd.read_csv(f'dev/scheduling_problems/pools/{p}.csv',dtype={'employee_id':'str'}), \
                  pd.read_csv(f'dev/scheduling_problems/schedules/{s}.csv',dtype={'shift_id':'str'})
+
+schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
+schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])
 
 env = SchedulingEnv(pool, schedule)
 

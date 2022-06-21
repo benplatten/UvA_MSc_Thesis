@@ -3,12 +3,13 @@ from gym.spaces import Discrete, Box
 import numpy as np
 import pandas as pd
 import joblib
+from numpy.lib.stride_tricks import sliding_window_view
 
 
 class SchedulingEnv(Env):
     """A personnel scheduling environment for OpenAI gym"""
 
-    def __init__(self, pool, schedule):
+    def __init__(self, pool, schedule, reward_type='Terminal'):
         sfEncodings = joblib.load('dev/shiftFeatureEncoding.joblib')
         shifts = pd.get_dummies(schedule[['shift_id']],drop_first=True)
         sfEncoded =  sfEncodings.transform(schedule[['shift_day_of_week','shift_type']])
@@ -32,6 +33,7 @@ class SchedulingEnv(Env):
         self.count_workers = len(pool)
         self.count_shifts = len(schedule)
         self.shift_number = 0
+        self.reward_type = reward_type
         self.reward_step = 0
         self.cum_reward = 0
         
@@ -66,33 +68,28 @@ class SchedulingEnv(Env):
         else:
             done = True
         
-        # reward function 1
-        # 0 - constraint violations
-        # 1 - no constraint violations
-
-        # reward function 2
-        # 1-(count_b2b / num shifts) - constraint violations
-        # 1 - no constraint violations
-
-        # reward function 3
-        # 1/num shifts for each acceptable assignment
-
-        # reward function 4
-        # end episode if b2b contraint broken 
-
-        # reward function 5
-        # 0 reward if b2b contraint broken 
-
-        #
-
 
         #print(f"reward_step:{self.reward_step}")
         #print(f"shift_num:{self.shift_number}")
         #print(self.state)
- 
-        if self.reward_step == 0:
-            reward = 0
-            #print(f"reward:{reward}")
+
+        if self.reward_type == 'Terminal':
+            if done == True:
+                count_b2b_violation = self.evaluateSchedule()
+                reward = 1 - (count_b2b_violation / self.count_shifts)
+            
+            elif done == False:
+                reward = 0
+
+        elif self.reward_type == 'Step':
+
+            if self.reward_step == 0:
+                reward = 0
+            
+            elif self.reward_step > 0:
+                count_b2b_violation = self.evaluateStep()
+                reward = 1 - count_b2b_violation
+                #print(f"reward:{reward}")
         
         else:
             step_b2bs = 0 
@@ -137,15 +134,93 @@ class SchedulingEnv(Env):
         self.state = self.schedule.to_numpy()
         return self.state
 
-    def check_b2b(self, worker_array):
-        countb2b=0
-        count=0
-        for i in range(len(worker_array)):
-            if worker_array[i]==1:
-                count=count+1
-                if count > 1:
-                    countb2b += 1                       
-            else:
-                count=0
+    def evaluateSchedule(self):
+        """Check a completed schedule for constraint violations.
+        For each employee, apply sliding window to compare successive shifts.
+        If an employee is assigned to b2b shifts, look up the relevant features.
+        If the shifts are on the same day, record a constraint violation
+        If the shifts are on successive days, evening then morning, records a constraint  violation.
+        Else, no constraint violation.
 
-        return countb2b
+        :param state: state matrix
+        :type state: numpy.array
+        :return: count of constraint violations
+        :rtype: int
+        """
+        count_b2b_violation = 0
+
+        for i in range(self.count_workers):
+            # using sliding window to compare successive shifts
+            # checks = a list of pairwise binary shift assignment feature, from last - first
+            checks = sliding_window_view(self.state[:,self.shift_features+i], 2)[::-1]
+            #print(checks)
+            # for each check
+            for j,k in enumerate(checks):
+                shift_id = abs(j - len(checks))-1
+                # check for b2b shifts
+                # 1 = assigned, 0 = not assigned
+                if sum(k) > 1:
+                    #print(f"employee:{i}, shift:{shift_id},{k}")
+                    # get features for b2b shifts
+                    shift_feats = self.state[shift_id:shift_id+2,self.count_shifts-1:self.shift_features]
+
+                    # just the features for day of week
+                    day_feats_1 = self.state[shift_id,self.count_shifts-1:self.shift_features-1]
+                    day_feats_2 = self.state[shift_id+1,self.count_shifts-1:self.shift_features-1]
+                    day1 = [np.where(day_feats_1==1)[0].item() + 2 if np.where(day_feats_1==1)[0].size != 0 else 1][0]
+                    day2 = [np.where(day_feats_2==1)[0].item() + 2 if np.where(day_feats_2==1)[0].size != 0 else 1][0]
+                    
+                    # shifts are on the same day = violation
+                    if day1 == day2:
+                        count_b2b_violation += 1
+                        print(f"shift:{shift_id+1},employee:{i}, constraint1 violated")
+                    
+                    # if shifts are on successive days, evening -> morning = violation
+                    if day2 == day1+1:
+                        # if shift 1 type = evening and shift 2 type = morning, record violation
+                        count_b2b_violation += [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0]
+                        if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
+                            print(f"shift:{shift_id+1},employee:{i}, constraint2 violated")
+
+
+        return count_b2b_violation
+
+    def evaluateStep(self):
+        """Check the last 2 shift assignments for constraint violations.
+        For each employee, compare successive shifts.
+        If an employee is assigned to b2b shifts, look up the relevant features.
+        If the shifts are on the same day, record a constraint violation
+        If the shifts are on successive days, evening then morning, records a constraint  violation.
+        Else, no constraint violation.
+
+        :param state: state matrix
+        :type state: numpy.array
+        :return: count of constraint violations
+        :rtype: int
+        """
+        count_b2b_violation = 0
+
+        for i in range(self.count_workers):
+            assignments = self.state[self.reward_step-1:self.reward_step+1,self.shift_features:][:,i]
+            if sum(assignments) > 1:
+                shift_feats = self.state[self.reward_step-1:self.reward_step+1,self.count_shifts-1:self.shift_features]
+
+                # just the features for day of week
+                day_feats_1 = self.state[self.reward_step-1,self.count_shifts-1:self.shift_features-1]
+                day_feats_2 = self.state[self.reward_step,self.count_shifts-1:self.shift_features-1]
+                day1 = [np.where(day_feats_1==1)[0].item() + 2 if np.where(day_feats_1==1)[0].size != 0 else 1][0]
+                day2 = [np.where(day_feats_2==1)[0].item() + 2 if np.where(day_feats_2==1)[0].size != 0 else 1][0]
+                
+                # shifts are on the same day = violation
+                if day1 == day2:
+                    count_b2b_violation += 1
+                    print(f"shift:{self.reward_step},employee:{i}, constraint1 violated")
+                
+                # if shifts are on successive days, evening -> morning = violation
+                if day2 == day1+1:
+                    # if shift 1 type = evening and shift 2 type = morning, record violation
+                    count_b2b_violation += [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0]
+                    if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
+                        print(f"shift:{self.reward_step},employee:{i}, constraint2 violated")
+
+        return count_b2b_violation

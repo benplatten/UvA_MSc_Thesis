@@ -4,7 +4,7 @@ from policy import *
 from agent import reinforce, randomAgent
 import torch.optim as optim
 from datetime import datetime
-from util import plot_scores, plot_learning_curve
+from plot_util import plot_scores, plot_learning_curve
 from data_utils import problemLoader
 
 start=datetime.now()
@@ -39,6 +39,8 @@ print(env.state)
 # #agent = randomAgent()
 # #scores = agent.run(env, n_episodes)
 
+
+### viz
 # filename = f"rf5_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
 
 # x = [i+1 for i in range(n_episodes -1)]

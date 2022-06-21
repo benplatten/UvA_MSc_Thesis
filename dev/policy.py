@@ -1,6 +1,6 @@
 
 import dgl
-from dgl.nn import GINConv
+from dgl.nn import RelGraphConv 
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -16,15 +16,15 @@ class Encoder(nn.Module):
         self.shift_features = shift_features
         self.shift_embedding = nn.Linear(5,in_feats)
         #self.worker_embedding = nn.Linear(count_workers,in_feats)
-        lin = nn.Linear(in_feats, h_feats)
-        lin2 = nn.Linear(h_feats, out_feats)
-        self.conv1 = GINConv(lin,aggregator_type='mean')
-        self.conv2 = GINConv(lin2,aggregator_type='mean')
+        #lin = nn.Linear(in_feats, h_feats)
+        #lin2 = nn.Linear(h_feats, out_feats)
+        self.conv1 = RelGraphConv(in_feats, out_feats, num_rels=((shift_features-4) * count_workers) * 2) 
+        #self.conv2 = RelGraphConv(lin2)      
 
-    def forward(self, g, in_feat):
-        h = self.conv1(g, in_feat)
+    def forward(self, g, feat, etype):
+        h = self.conv1(g, feat, etype)
         h = F.relu(h)
-        h = self.conv2(g, h)
+        #h = self.conv2(g, h)
         #print(h)
         g.ndata['h'] = h
         return g 
@@ -113,16 +113,13 @@ class Policy(nn.Module):
                 es_idx = (edges == emp_id).nonzero(as_tuple=True)[0][shift]
                 
                 #save data to edges
-                bg.edges[[se_idx,es_idx]].data['y'] = torch.ones(2)
-
-        print(state)
-        print(bg.edata)
+                bg.edges[[se_idx,es_idx]].data['y'] = torch.ones(2) # 2 because it's a bidirectional edge
 
         return bg, shift_index
 
     def forward(self, state):
         graph, shift_index = self.grapher(state)
-        encoded_graph = self.encoder(graph, graph.ndata['x'])
+        encoded_graph = self.encoder(graph, graph.ndata['x'],graph.edata['y'])
         self.probs = self.decoder(encoded_graph, shift_index)
 
         return self.probs
