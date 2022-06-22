@@ -3,18 +3,25 @@ import numpy as np
 import glob
 
 def updateDataIndex():
-    scheds = glob.glob("schedules/*.csv")
-    pools = glob.glob("pools/*.csv")
+    """Update index of scheduling data by iterating through schedule and pool directories.
+
+    :return: Index of scheduling data.
+    :rtype: pandas.DataFrame
+    """
+    scheds = glob.glob("/Users/benplatten/workspace/UvA_Thesis/UvA_MSc_Thesis/dev/scheduling_problems/schedules/*.csv")
+    if len(scheds) == 0:
+        print('problem loading data...')
+    pools = glob.glob("/Users/benplatten/workspace/UvA_Thesis/UvA_MSc_Thesis/dev/scheduling_problems/pools/*.csv")
     s_len = []
     Schedule = []
     for sched in sorted(scheds):
         s_len.append(len(pd.read_csv(sched)))
-        Schedule.append(sched.split('/')[1].split('_')[1].split('.')[0])
+        Schedule.append(sched.split('/')[9].split('_')[1].split('.')[0])
     p_len = []
     Pool = []
     for pool in sorted(pools):
         p_len.append(len(pd.read_csv(pool)))
-        Pool.append(pool.split('/')[1].split('_')[1].split('.')[0])
+        Pool.append(pool.split('/')[9].split('_')[1].split('.')[0])
 
     Pool += ['nan'] * (len(Schedule) - len(Pool))
     p_len += ['nan'] * (len(s_len) - len(p_len))
@@ -27,8 +34,7 @@ def updateDataIndex():
 
 
 def problemIndex():
-    di = updateDataIndex()
-    #di = pd.read_csv('data_index.csv',dtype=str)
+    di = pd.read_csv('data_index.csv',dtype=str) # updateDataIndex()
     di['shifts'] = di['shifts'].astype(int) 
     
     pi = pd.DataFrame(columns=['Schedule', 'Pool'])
@@ -82,14 +88,13 @@ def problemValidation():
 
     return dupes
 
-def problemLoader(num_shifts,num_emps):
+def problemLoader(max_shifts):
     pi = problemIndex()
-    pi.head()
+    #pi.head()
 
-    selectedProbs = pi[(pi['shifts'] == num_shifts) & (pi['employees'] == num_emps)] 
+    selectedProbs = pi[pi['shifts'] <=max_shifts]
+    #selectedProbs = pi[(pi['shifts'] == num_shifts) & (pi['employees'] == num_emps)] 
     selectedProbs
-
-
 
     glob_list = []
     for i in range(len(selectedProbs)):
@@ -107,7 +112,7 @@ di.to_csv('data_index.csv',index=False)
 pi = problemIndex()
 pi.to_csv('problem_index.csv', index=False)
 
-dupes =  problemValidation()
+dupes = problemValidation()
 df = pd.DataFrame(dupes)
 df.to_csv('duplicate_problems.csv', index=False)
 

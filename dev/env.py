@@ -9,7 +9,7 @@ from numpy.lib.stride_tricks import sliding_window_view
 class SchedulingEnv(Env):
     """A personnel scheduling environment for OpenAI gym"""
 
-    def __init__(self, pool, schedule, reward_type='Terminal'):
+    def __init__(self, pool, schedule, reward_type):
         sfEncodings = joblib.load('dev/shiftFeatureEncoding.joblib')
         shifts = pd.get_dummies(schedule[['shift_id']],drop_first=True)
         sfEncoded =  sfEncodings.transform(schedule[['shift_day_of_week','shift_type']])
@@ -56,7 +56,7 @@ class SchedulingEnv(Env):
             -done (:py:class:`boolean`) - flag to indicate whether the episode is complete
             -info (:py:class:`int`) - ?
         """
-    
+
         # assign worker
         self.state[self.shift_number,(self.shift_features+action)] = 1
 
@@ -69,10 +69,6 @@ class SchedulingEnv(Env):
             done = True
         
 
-        #print(f"reward_step:{self.reward_step}")
-        #print(f"shift_num:{self.shift_number}")
-        #print(self.state)
-
         if self.reward_type == 'Terminal':
             if done == True:
                 count_b2b_violation = self.evaluateSchedule()
@@ -82,34 +78,16 @@ class SchedulingEnv(Env):
                 reward = 0
 
         elif self.reward_type == 'Step':
-
             if self.reward_step == 0:
                 reward = 0
             
             elif self.reward_step > 0:
                 count_b2b_violation = self.evaluateStep()
-                reward = 1 - count_b2b_violation
-                #print(f"reward:{reward}")
-        
-        else:
-            step_b2bs = 0 
-            for i in range(self.state[self.reward_step-1:self.reward_step+1,self.shift_features:].shape[1]):
-                step = self.state[self.reward_step-1:self.reward_step+1,self.shift_features:][:,i]
-                #print(step)
-                step_b2bs += self.check_b2b(step)
-
-            if step_b2bs == 0:
-                reward = (1/(self.count_shifts-1)) 
-
-            else: 
-                #done = True
-                #print(f"Episode ended on shift: {self.shift_number}")
-                reward = self.cum_reward * -1  
-            #print(f"reward:{reward}")
+                reward = (1/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
+                self.cum_reward += reward
 
         self.reward_step += 1
-        self.cum_reward += reward
-
+        
         #if done:
             #print(f"episode reward: {self.cum_reward}")
 
@@ -151,14 +129,14 @@ class SchedulingEnv(Env):
 
         for i in range(self.count_workers):
             # using sliding window to compare successive shifts
-            # checks = a list of pairwise binary shift assignment feature, from last - first
+            # checks = a list of pairwise binary shift assignment features, from last - first
             checks = sliding_window_view(self.state[:,self.shift_features+i], 2)[::-1]
             #print(checks)
             # for each check
             for j,k in enumerate(checks):
                 shift_id = abs(j - len(checks))-1
                 # check for b2b shifts
-                # 1 = assigned, 0 = not assigned
+                # 1 = assigned, 0 = not assigned, 2 = b2b
                 if sum(k) > 1:
                     #print(f"employee:{i}, shift:{shift_id},{k}")
                     # get features for b2b shifts
@@ -173,15 +151,14 @@ class SchedulingEnv(Env):
                     # shifts are on the same day = violation
                     if day1 == day2:
                         count_b2b_violation += 1
-                        print(f"shift:{shift_id+1},employee:{i}, constraint1 violated")
+                        #print(f"shift:{shift_id+1},employee:{i}, constraint1 violated")
                     
                     # if shifts are on successive days, evening -> morning = violation
                     if day2 == day1+1:
                         # if shift 1 type = evening and shift 2 type = morning, record violation
                         count_b2b_violation += [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0]
-                        if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
-                            print(f"shift:{shift_id+1},employee:{i}, constraint2 violated")
-
+                        #if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
+                            #print(f"shift:{shift_id+1},employee:{i}, constraint2 violated")
 
         return count_b2b_violation
 
@@ -214,13 +191,13 @@ class SchedulingEnv(Env):
                 # shifts are on the same day = violation
                 if day1 == day2:
                     count_b2b_violation += 1
-                    print(f"shift:{self.reward_step},employee:{i}, constraint1 violated")
+                    #print(f"shift:{self.reward_step},employee:{i}, constraint1 violated")
                 
                 # if shifts are on successive days, evening -> morning = violation
                 if day2 == day1+1:
                     # if shift 1 type = evening and shift 2 type = morning, record violation
                     count_b2b_violation += [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0]
-                    if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
-                        print(f"shift:{self.reward_step},employee:{i}, constraint2 violated")
+                    #if [1 if shift_feats[:,4][0] == 1 and shift_feats[:,4][1] == 0 else 0][0] == 1:
+                        #print(f"shift:{self.reward_step},employee:{i}, constraint2 violated")
 
         return count_b2b_violation

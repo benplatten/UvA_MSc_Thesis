@@ -4,44 +4,40 @@ from policy import *
 from agent import reinforce, randomAgent
 import torch.optim as optim
 from datetime import datetime
-from plot_util import plot_scores, plot_learning_curve
-#from data_utils import problemLoader
+from plot_utils import plot_scores, plot_learning_curve
+from data_utils import problemLoader
+import random
 
+import warnings
+warnings.filterwarnings("ignore")
 
-#num_shifts = 8
-#num_emps = 4
-#problem_batch = problemLoader(num_shifts,num_emps)
-# list of tuples with csv ids
+seeds= [10, 21, 31, 65, 91]
+seed=seeds[3]
+random.seed(seed)
 
-p = "pool_0004"
-s = "schedule_0020"
+now = datetime.now().strftime("%m%d%H:%M")
+max_shifts = 8
+n_episodes = 10000
+reward_type = 'Step' # 'Terminal' 'Step'
 
-pool, schedule = pd.read_csv(f'dev/scheduling_problems/pools/{p}.csv',dtype={'employee_id':'str'}), \
-                 pd.read_csv(f'dev/scheduling_problems/schedules/{s}.csv',dtype={'shift_id':'str'})
+problem_batch = problemLoader(max_shifts)
 
-schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
-schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])
-
-env = SchedulingEnv(pool, schedule)
-
-#print(env.state)
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-encoder = Encoder(env.shift_features, env.count_workers, 32, 32, 32)
-decoder = Decoder(env.count_shifts)
+device = torch.device("cpu") #"cuda:0" if torch.cuda.is_available() else "cpu")
+encoder = Encoder(32, 32, 32)
+decoder = Decoder()
 policy = Policy(encoder, decoder).to(device)
 
 optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
-agent = reinforce(policy, optimizer,max_t=1000,gamma=1)
-n_episodes = 2
-scores = agent.run(env,n_episodes=n_episodes,print_every=1000)
+agent = reinforce(policy, optimizer, reward_type, max_t=1000,gamma=1)
 
+scores, problog = agent.run(problem_batch,n_episodes=n_episodes,print_every=100)
 
-#print(bg.number_of_edges())
-#print(bg.edata)
-#print(bg.edges(form='all')[1])
+### viz
+x = [i+1 for i in range(n_episodes -1)]
+filename = f"{now}_max_shifts={max_shifts}_reward_type={reward_type}_episodes={n_episodes}_seed={seed}" #f"Random_SchedulingEnv_{now}"  
+#plot_scores(scores, filename)
+plot_learning_curve(scores, x, filename)
 
-
-#G.edges[1, 2].data['y'] = th.ones((1, 4))
-#G.edata
+data = pd.DataFrame.from_dict({'scores':scores, 'prob':problog})
+data.to_csv(f"dev/run_data/{filename}.csv",index=False)
 

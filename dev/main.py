@@ -4,11 +4,11 @@ from policy import *
 from agent import reinforce, randomAgent
 import torch.optim as optim
 from datetime import datetime
-from plot_util import plot_scores, plot_learning_curve
+from plot_utils import plot_scores, plot_learning_curve
 from data_utils import problemLoader
 
 start=datetime.now()
-now = datetime.now().strftime("%Y%m%d%H:%M")
+now = datetime.now().strftime("%m%d%H:%M")
 p = "pool_0001"
 s = "schedule_0001"
 
