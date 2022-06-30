@@ -10,7 +10,7 @@ class SchedulingEnv(Env):
     """A personnel scheduling environment for OpenAI gym"""
 
     def __init__(self, pool, schedule, reward_type):
-        sfEncodings = joblib.load('dev/shiftFeatureEncoding.joblib')
+        sfEncodings = joblib.load('shiftFeatureEncoding.joblib')
         shifts = pd.get_dummies(schedule[['shift_id']],drop_first=True)
         sfEncoded =  sfEncodings.transform(schedule[['shift_day_of_week','shift_type']])
         shift_features = pd.DataFrame(sfEncoded, columns=sfEncodings.get_feature_names_out())
@@ -35,7 +35,8 @@ class SchedulingEnv(Env):
         self.shift_number = 0
         self.reward_type = reward_type
         self.reward_step = 0
-        self.cum_reward = 0
+        self.cummulative_reward = 0
+        self.cummulative_violations = 0
         
         # action space: Employees we can assign to shifts
         self.action_space = Discrete(self.count_workers)
@@ -84,7 +85,19 @@ class SchedulingEnv(Env):
             elif self.reward_step > 0:
                 count_b2b_violation = self.evaluateStep()
                 reward = (1/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
-                self.cum_reward += reward
+                self.cummulative_reward += reward
+
+        elif self.reward_type == 'Step_Bonus':
+            if self.reward_step == 0:
+                reward = 0
+            
+            elif self.reward_step > 0:
+                count_b2b_violation = self.evaluateStep()
+                self.cummulative_violations += count_b2b_violation
+                reward = (.5/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
+                if self.reward_step == (self.count_shifts - 1) and self.cummulative_violations == 0:
+                    reward += .5 
+                self.cummulative_reward += reward
 
         self.reward_step += 1
         
@@ -108,7 +121,8 @@ class SchedulingEnv(Env):
         """
         self.shift_number = 0
         self.reward_step = 0
-        self.cum_reward = 0
+        self.cummulative_reward = 0
+        self.cummulative_violations = 0
         self.state = self.schedule.to_numpy()
         return self.state
 
