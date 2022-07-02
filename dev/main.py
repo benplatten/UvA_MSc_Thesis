@@ -12,12 +12,17 @@ now = datetime.now().strftime("%m%d%H:%M")
 p = "pool_0001"
 s = "schedule_0001"
 
-pool, schedule = pd.read_csv(f'dev/pools/{p}.csv',dtype={'employee_id':'str'}), \
-                 pd.read_csv(f'dev/schedules/{s}.csv',dtype={'shift_id':'str'})
+pool, schedule = pd.read_csv(f'scheduling_problems/pools/{p}.csv',dtype={'employee_id':'str'}), \
+                 pd.read_csv(f'scheduling_problems/schedules/{s}.csv',dtype={'shift_id':'str'})
 
 print(pool)
 print(schedule)
-env = SchedulingEnv(pool, schedule)
+
+schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
+schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])
+
+
+env = SchedulingEnv(pool, schedule, reward_type='Step_Bonus')
 
 #print(env.shift_features)
 #print(env.count_shifts)
@@ -40,31 +45,4 @@ print(env.state)
 # #scores = agent.run(env, n_episodes)
 
 
-### viz
-# filename = f"rf5_{now}_max_t=1000_lr=1e-3_episodes={n_episodes}_{p}_{s}" #f"Random_SchedulingEnv_{now}"  
-
-# x = [i+1 for i in range(n_episodes -1)]
-# #plot_scores(scores, filename)
-# plot_learning_curve(scores, x, filename)
-
-# print(f"time to complete: {datetime.now() - start}")
-
  
-# Tracking
-# mlfow or tensorboard?
-#
-# Hyperparameters:
-#   max_t
-#   lr
-#   n_episodes
-#   gamma
-#   deque maxlen?
-#   batch size
-#   samples
-# 
-# Scores:
-#   average
-#   max
-#   count of max?
-#   min
-#   std  """

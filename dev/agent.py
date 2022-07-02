@@ -132,8 +132,8 @@ class reinforce():
 
             env = SchedulingEnv(pool, schedule, self.reward_type)
             
-            print("Initial state:")
-            print(env.state)
+            #print("Initial state:")
+            #print(env.state)
 
             #saved_log_probs = []
             rewards = []
@@ -148,9 +148,11 @@ class reinforce():
                 if done:
                     break
             
-            print("Terminal state:")
-            print(env.state)
-            print(env.cummulative_reward)
+            #print("Terminal state:")
+            #print(env.state)
+            #print(env.cummulative_reward)
+
+            return sum(rewards)
 
 
 

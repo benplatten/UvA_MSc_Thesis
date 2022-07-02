@@ -173,10 +173,13 @@ def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=Fals
     shift_day_of_week = []
     days = ['Monday','Tuesday','Wednesday','Thursday','Friday']
 
-    for i in range(len(shift_id)):
+    i=0
+    while i < len(shift_id):
+    #for i in range(len(shift_id)):
         choice = random.choice(days)
         if shift_day_of_week.count(choice) < max_shifts_per_day + 1:
             shift_day_of_week.append(choice)
+            i+=1
 
     shift_day_of_week = sorted(shift_day_of_week, key=days.index)
     
@@ -200,7 +203,10 @@ def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=Fals
         employee_id = empGen(len(shift_id),num_emps)
         if len(shift_id) / len(employee_id) <= 5:
             break
-        
+    
+    #print(len(shift_id))
+    #print(len(shift_day_of_week))
+    #print(len(shift_type))
     scheduleDic = {'shift_id':shift_id,'shift_day_of_week':shift_day_of_week,'shift_type':shift_type}
     
     schedule = pd.DataFrame(scheduleDic)
@@ -267,6 +273,54 @@ def loadTestProblem(num_shifts=False):
     except:
         print(f"No problem with {num_shifts} shifts.")
 
+def testProblemIndex():
+    tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
+
+    tpi  = pd.DataFrame(columns=['Schedule','shifts', 'Pool', 'employees','nodes','ratio'])
+
+    for i in range(int(len(tstst)/2)):
+        pool = tstst[i]
+        schedule = tstst[i+(int(len(tstst) / 2))]
+
+        pool, schedule = pd.read_csv(pool,dtype={'employee_id':'str'}), \
+                    pd.read_csv(schedule,dtype={'shift_id':'str'})
+        
+        Schedule = tstst[i].split('/')[2].split('_')[1].split('.')[0]
+        shifts = int(len(schedule))
+        Pool = tstst[i+(int(len(tstst) / 2))].split('/')[2].split('_')[1].split('.')[0]
+        employees = int(len(pool))
+        nodes = shifts + employees 
+        ratio = shifts / employees
+
+        tpi.loc[0 if pd.isnull(tpi.index.max()) else tpi.index.max() + 1] = [Schedule] + [shifts] + [Pool] + [employees] + [nodes] + [ratio]
+
+    sdf = tpi.groupby(['shifts']).agg({
+    'shifts': 'count',
+    'nodes': 'mean',
+    'ratio': 'mean',
+    'employees': 'mean'
+        })
+
+    sdf.columns =['count','avg_nodes','avg_ratio','avg_employees']
+
+    return tpi, sdf
+
+def testProbList(subset):
+    test_set = sorted(glob.glob(f"scheduling_problems/test_set/{subset}/*.csv"))
+    test_index = pd.read_csv(f"scheduling_problems/test_set_indexes/testproblemindex_{subset}.csv")
+    problist = []
+
+    for i in range(len(test_index)):
+        s = str(int(test_index.iloc[i]['Schedule'])).zfill(2)
+        p = str(int(test_index.iloc[i]['Pool'])).zfill(2)
+
+        sp = f"scheduling_problems/test_set/{subset}/schedule_{s}.csv"
+        pp = f"scheduling_problems/test_set/{subset}/pool_{p}.csv"
+
+        problist.append((sp,pp))
+
+    return problist
+
 ############
 
 # //// training data \\\\
@@ -283,8 +337,13 @@ def loadTestProblem(num_shifts=False):
 #df = pd.DataFrame(dupes)
 #df.to_csv('scheduling_problems/duplicate_problems.csv', index=False)
 
+
 # //// test data \\\\
 
-buildTestSet(n=2,min_shifts=3,max_shifts=8)
+#buildTestSet(n=27,min_shifts=9,max_shifts=14)
+
+tpi, sdf = testProblemIndex()
+#tpi.to_csv('scheduling_problems/testproblemindex.csv',index=False)
+sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
 
 # loadTestProblem(num_shifts=5)
