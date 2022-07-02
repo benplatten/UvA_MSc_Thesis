@@ -273,37 +273,62 @@ def loadTestProblem(num_shifts=False):
     except:
         print(f"No problem with {num_shifts} shifts.")
 
-def testProblemIndex():
-    tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
+def testProblemIndex(subdir=False):
+    if subdir:
+            tstst = sorted(glob.glob(f"scheduling_problems/test_set/{subdir}/*.csv"))
 
-    tpi  = pd.DataFrame(columns=['Schedule','shifts', 'Pool', 'employees','nodes','ratio'])
+            tpi  = pd.DataFrame(columns=['Schedule','shifts', 'Pool', 'employees','nodes','ratio'])
 
-    for i in range(int(len(tstst)/2)):
-        pool = tstst[i]
-        schedule = tstst[i+(int(len(tstst) / 2))]
+            for i in range(int(len(tstst)/2)):
+                pool = tstst[i]
+                schedule = tstst[i+(int(len(tstst) / 2))]
 
-        pool, schedule = pd.read_csv(pool,dtype={'employee_id':'str'}), \
-                    pd.read_csv(schedule,dtype={'shift_id':'str'})
-        
-        Schedule = tstst[i].split('/')[2].split('_')[1].split('.')[0]
-        shifts = int(len(schedule))
-        Pool = tstst[i+(int(len(tstst) / 2))].split('/')[2].split('_')[1].split('.')[0]
-        employees = int(len(pool))
-        nodes = shifts + employees 
-        ratio = shifts / employees
+                pool, schedule = pd.read_csv(pool,dtype={'employee_id':'str'}), \
+                            pd.read_csv(schedule,dtype={'shift_id':'str'})
+                
+                Schedule = tstst[i].split('/')[3].split('_')[1].split('.')[0]
+                shifts = int(len(schedule))
+                Pool = tstst[i+(int(len(tstst) / 2))].split('/')[3].split('_')[1].split('.')[0]
+                employees = int(len(pool))
+                nodes = shifts + employees 
+                ratio = shifts / employees
 
-        tpi.loc[0 if pd.isnull(tpi.index.max()) else tpi.index.max() + 1] = [Schedule] + [shifts] + [Pool] + [employees] + [nodes] + [ratio]
+                tpi.loc[0 if pd.isnull(tpi.index.max()) else tpi.index.max() + 1] = [Schedule] + [shifts] + [Pool] + [employees] + [nodes] + [ratio]
 
-    sdf = tpi.groupby(['shifts']).agg({
-    'shifts': 'count',
-    'nodes': 'mean',
-    'ratio': 'mean',
-    'employees': 'mean'
-        })
+            sdf = ''
 
-    sdf.columns =['count','avg_nodes','avg_ratio','avg_employees']
+            return tpi, sdf
+    else:
+        tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
 
-    return tpi, sdf
+        tpi  = pd.DataFrame(columns=['Schedule','shifts', 'Pool', 'employees','nodes','ratio'])
+
+        for i in range(int(len(tstst)/2)):
+            pool = tstst[i]
+            schedule = tstst[i+(int(len(tstst) / 2))]
+
+            pool, schedule = pd.read_csv(pool,dtype={'employee_id':'str'}), \
+                        pd.read_csv(schedule,dtype={'shift_id':'str'})
+            
+            Schedule = tstst[i].split('/')[2].split('_')[1].split('.')[0]
+            shifts = int(len(schedule))
+            Pool = tstst[i+(int(len(tstst) / 2))].split('/')[2].split('_')[1].split('.')[0]
+            employees = int(len(pool))
+            nodes = shifts + employees 
+            ratio = shifts / employees
+
+            tpi.loc[0 if pd.isnull(tpi.index.max()) else tpi.index.max() + 1] = [Schedule] + [shifts] + [Pool] + [employees] + [nodes] + [ratio]
+
+        sdf = tpi.groupby(['shifts']).agg({
+        'shifts': 'count',
+        'nodes': 'mean',
+        'ratio': 'mean',
+        'employees': 'mean'
+            })
+
+        sdf.columns =['count','avg_nodes','avg_ratio','avg_employees']
+
+        return tpi, sdf
 
 def testProbList(subset):
     test_set = sorted(glob.glob(f"scheduling_problems/test_set/{subset}/*.csv"))
@@ -340,10 +365,12 @@ def testProbList(subset):
 
 # //// test data \\\\
 
-#buildTestSet(n=27,min_shifts=9,max_shifts=14)
+buildTestSet(n=27,min_shifts=19,max_shifts=23)
 
-tpi, sdf = testProblemIndex()
-#tpi.to_csv('scheduling_problems/testproblemindex.csv',index=False)
-sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
+#subdir='shifts_extrahard_ratio_mixed'
+
+tpi, sdf = testProblemIndex() #subdir=subdir)
+tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)
+#sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
 
 # loadTestProblem(num_shifts=5)
