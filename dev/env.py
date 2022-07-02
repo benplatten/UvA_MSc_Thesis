@@ -85,7 +85,7 @@ class SchedulingEnv(Env):
             elif self.reward_step > 0:
                 count_b2b_violation = self.evaluateStep()
                 reward = (1/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
-                self.cummulative_reward += reward
+                
 
         elif self.reward_type == 'Step_Bonus':
             if self.reward_step == 0:
@@ -97,8 +97,8 @@ class SchedulingEnv(Env):
                 reward = (.5/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
                 if self.reward_step == (self.count_shifts - 1) and self.cummulative_violations == 0:
                     reward += .5 
-                self.cummulative_reward += reward
-
+                
+        self.cummulative_reward += reward
         self.reward_step += 1
         
         #if done:

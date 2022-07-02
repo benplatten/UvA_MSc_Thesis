@@ -33,9 +33,9 @@ def updateDataIndex():
     
     return di
 
-
 def problemIndex():
-    di = pd.read_csv('scheduling_problems/data_index.csv',dtype=str) # updateDataIndex()
+    di = pd.read_csv('scheduling_problems/data_index.csv',dtype=str) 
+    #di = updateDataIndex()
     di['shifts'] = di['shifts'].astype(int) 
     
     pi = pd.DataFrame(columns=['Schedule', 'Pool'])
@@ -58,7 +58,6 @@ def problemIndex():
     
     return pi
 
-
 def matrify(pool, schedule):
     schedule = pd.get_dummies(schedule,drop_first=True)
     #shift_features = schedule.shape[1]
@@ -66,7 +65,6 @@ def matrify(pool, schedule):
         schedule[i] = 0
 
     return schedule.to_numpy()
-
 
 def problemValidation():
     scheds = glob.glob("scheduling_problems/schedules/*.csv")
@@ -151,20 +149,142 @@ def randomSchedule(n=1, min_shifts=2,max_shifts=16, max_shifts_per_day=4):
 
         print(f"schedule_00{id} saved.")
 
-    #return schedule
+def empGen(num_shifts,num_emps=False):
+    lower = round(num_shifts / 2.8)
+    upper = round(num_shifts / 1.2)
+    employee_id = []
+    e = random.randint(lower, upper)
+    if num_emps:
+        for i in range(num_emps):
+            employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
+    else:
+        for i in range(e):
+            employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
+    
+    return employee_id
+
+def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=False):
+    
+    # shift_id
+    n = random.randint(min_shifts, max_shifts)
+    shift_id = list(range(0, n))
+    
+    # shift_day_of_week
+    shift_day_of_week = []
+    days = ['Monday','Tuesday','Wednesday','Thursday','Friday']
+
+    for i in range(len(shift_id)):
+        choice = random.choice(days)
+        if shift_day_of_week.count(choice) < max_shifts_per_day + 1:
+            shift_day_of_week.append(choice)
+
+    shift_day_of_week = sorted(shift_day_of_week, key=days.index)
+    
+    # shift_type
+    shift_type = []
+    shift_types = ['Morning','Evening']
+
+    dayset = set(shift_day_of_week)
+    sortedDayset = sorted(list(dayset), key=days.index)
+
+    for i in sortedDayset:
+        temp = []
+        for j in range(shift_day_of_week.count(i)):
+            temp.append(random.choice(shift_types))
+        temp = sorted(temp, key=shift_types.index)
+        for k in temp:
+            shift_type.append(k)
+            
+    # employee_id
+    while True:
+        employee_id = empGen(len(shift_id),num_emps)
+        if len(shift_id) / len(employee_id) <= 5:
+            break
         
+    scheduleDic = {'shift_id':shift_id,'shift_day_of_week':shift_day_of_week,'shift_type':shift_type}
+    
+    schedule = pd.DataFrame(scheduleDic)
+    pool = pd.DataFrame({'employee_id':employee_id})
+    
+    return schedule, pool
+        
+def buildTestSet(n,min_shifts,max_shifts,num_emps=False):
+    i = 0
+    while i < n:
+        try:
+            schedule, pool = randomProblem(min_shifts=min_shifts,max_shifts=max_shifts,num_emps=num_emps)
 
-    ############
+            tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
 
-randomSchedule(n=16, min_shifts=12,max_shifts=14, max_shifts_per_day=4)
+            if tstst:
+                id = int(tstst[-1].split('/')[2].split('_')[1].split('.')[0]) + 1
+        
+            else:
+                id = 1
 
-di = updateDataIndex()
-di.to_csv('scheduling_problems/data_index.csv',index=False)
+            ratio = len(schedule) / len(pool)
 
-pi = problemIndex()
-pi.to_csv('scheduling_problems/problem_index.csv', index=False)
+            if ratio > 1 and ratio < 3:
+                i += 1
+                schedule, pool = schedule.to_csv(f'scheduling_problems/test_set/schedule_{str(id).zfill(2)}.csv',index=False), \
+                            pool.to_csv(f'scheduling_problems/test_set/pool_{str(id).zfill(2)}.csv',index=False) 
+        
+            else:
+                continue
+        
+        except ValueError as verror:
+            print(verror)
+            break
 
-dupes = problemValidation()
-df = pd.DataFrame(dupes)
-df.to_csv('scheduling_problems/duplicate_problems.csv', index=False)
+        except NameError as nerror:
+            print(nerror)
+            break
 
+        except:
+            continue
+
+def loadTestProblem(num_shifts=False):
+    tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
+
+    try:
+        if num_shifts:
+            shfts = 0
+            while not shfts == num_shifts:
+                n = random.randint(1, (len(tstst) / 2))
+                p = tstst[n-1]
+                s = tstst[n+(int(len(tstst) / 2)-1)]
+
+                schedule = pd.read_csv(f'{tstst[n+(int(len(tstst) / 2)-1)]}',dtype={'shift_id':'str'})
+                if len(schedule) == num_shifts:
+                    shfts = num_shifts
+
+        else:
+            n = random.randint(1, (len(tstst) / 2))
+            p = tstst[n-1]
+            s = tstst[n+(int(len(tstst) / 2)-1)]
+
+        return (p,s)
+    except:
+        print(f"No problem with {num_shifts} shifts.")
+
+############
+
+# //// training data \\\\
+
+#randomSchedule(n=5, min_shifts=14,max_shifts=14, max_shifts_per_day=4)
+
+#di = updateDataIndex()
+#di.to_csv('scheduling_problems/data_index.csv',index=False)
+
+#pi = problemIndex()
+#pi.to_csv('scheduling_problems/problem_index.csv', index=False)
+
+#dupes = problemValidation()
+#df = pd.DataFrame(dupes)
+#df.to_csv('scheduling_problems/duplicate_problems.csv', index=False)
+
+# //// test data \\\\
+
+buildTestSet(n=2,min_shifts=3,max_shifts=8)
+
+# loadTestProblem(num_shifts=5)

@@ -132,6 +132,18 @@ class Policy(nn.Module):
         action = model.sample()
         return action.item(), model.log_prob(action)
 
+    def guide(self, state, count_shifts, shift_features, method='max'):
+        if method == 'max':
+            probs = self.forward(state, count_shifts, shift_features)
+            action = torch.argmax(probs)
+        
+        elif method == 'sample':
+            probs = self.forward(state, count_shifts, shift_features)
+            model = Categorical(probs)
+            action = model.sample()
+
+        return action.item()
+
 
 
 
