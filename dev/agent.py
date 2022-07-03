@@ -148,9 +148,9 @@ class reinforce():
                 if done:
                     break
             
-            #print("Terminal state:")
-            #print(env.state)
-            #print(env.cummulative_reward)
+            # print("Terminal state:")
+            # print(env.state)
+            # print(env.cummulative_reward)
 
             return sum(rewards)
 
@@ -190,3 +190,30 @@ class randomAgent():
                     print(env.state)
                     
             return sum(rewards), 0
+
+    def solve(self, pool, schedule):
+
+            schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
+            schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])
+
+            env = SchedulingEnv(pool, schedule, 'Step_Bonus')
+            
+            # print("Initial state:")
+            # print(env.state)
+
+            rewards = []
+            state = env.reset()
+            done = False
+
+            while not done:
+                # Sample the action from current policy
+                action = env.action_space.sample()
+                #saved_log_probs.append(log_prob)
+                state, reward, done, _ = env.step(action)
+                rewards.append(reward)
+            
+            # print("Terminal state:")
+            # print(env.state)
+            # print(env.cummulative_reward)
+
+            return sum(rewards)

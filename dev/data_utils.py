@@ -149,22 +149,41 @@ def randomSchedule(n=1, min_shifts=2,max_shifts=16, max_shifts_per_day=4):
 
         print(f"schedule_00{id} saved.")
 
-def empGen(num_shifts,num_emps=False):
-    lower = round(num_shifts / 2.8)
-    upper = round(num_shifts / 1.2)
-    employee_id = []
-    e = random.randint(lower, upper)
-    if num_emps:
-        for i in range(num_emps):
-            employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
-    else:
+def empGen(num_shifts,num_emps=False,ratio=False):
+    print("running empGen")
+    if ratio:
+        #e.g (3,5)
+        lower= round(num_shifts / ratio[1])
+        upper= round(num_shifts / ratio[0])
+
+        #i = 0
+        employee_id = []
+        e = random.randint(lower, upper)
+
         for i in range(e):
             employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
+
+        if len(employee_id) == 1:
+            employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
+        
+    else:    
+        i = 0
+        lower = round(num_shifts / 2.8)
+        upper = round(num_shifts / 1.2)
+        employee_id = []
+        e = random.randint(lower, upper)
+        if num_emps:
+            for i in range(num_emps):
+                employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
+        else:
+            for i in range(e):
+                employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
     
+    print("empGen finished")
     return employee_id
 
-def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=False):
-    
+def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=False,ratio=False):
+    print('running randomProblem')
     # shift_id
     n = random.randint(min_shifts, max_shifts)
     shift_id = list(range(0, n))
@@ -200,25 +219,29 @@ def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=Fals
             
     # employee_id
     while True:
-        employee_id = empGen(len(shift_id),num_emps)
+        employee_id = empGen(len(shift_id),num_emps,ratio=ratio)
         if len(shift_id) / len(employee_id) <= 5:
             break
     
-    #print(len(shift_id))
-    #print(len(shift_day_of_week))
-    #print(len(shift_type))
+    # print(len(shift_id))
+    # print(len(shift_day_of_week))
+    # print(len(shift_type))
     scheduleDic = {'shift_id':shift_id,'shift_day_of_week':shift_day_of_week,'shift_type':shift_type}
     
     schedule = pd.DataFrame(scheduleDic)
     pool = pd.DataFrame({'employee_id':employee_id})
     
+    print('randomProblem finished')
     return schedule, pool
         
-def buildTestSet(n,min_shifts,max_shifts,num_emps=False):
+def buildTestSet(n,min_shifts,max_shifts,max_shifts_per_day=4,num_emps=False,ratio=False):
+
+    print(f"max_shifts_per_day:{max_shifts_per_day}")
     i = 0
     while i < n:
+        print(i)
         try:
-            schedule, pool = randomProblem(min_shifts=min_shifts,max_shifts=max_shifts,num_emps=num_emps)
+            schedule, pool = randomProblem(min_shifts=min_shifts,max_shifts=max_shifts,max_shifts_per_day=max_shifts_per_day,num_emps=num_emps,ratio=ratio)
 
             tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
 
@@ -228,15 +251,15 @@ def buildTestSet(n,min_shifts,max_shifts,num_emps=False):
             else:
                 id = 1
 
-            ratio = len(schedule) / len(pool)
+            #ratio = len(schedule) / len(pool)
 
-            if ratio > 1 and ratio < 3:
-                i += 1
-                schedule, pool = schedule.to_csv(f'scheduling_problems/test_set/schedule_{str(id).zfill(2)}.csv',index=False), \
-                            pool.to_csv(f'scheduling_problems/test_set/pool_{str(id).zfill(2)}.csv',index=False) 
-        
-            else:
-                continue
+            #if ratio > 1 and ratio < 3:
+            i += 1
+            schedule, pool = schedule.to_csv(f'scheduling_problems/test_set/schedule_{str(id).zfill(2)}.csv',index=False), \
+                        pool.to_csv(f'scheduling_problems/test_set/pool_{str(id).zfill(2)}.csv',index=False) 
+    
+            #else:
+            #    continue
         
         except ValueError as verror:
             print(verror)
@@ -247,10 +270,11 @@ def buildTestSet(n,min_shifts,max_shifts,num_emps=False):
             break
 
         except:
+            print("something is wrong...")
             continue
 
 def loadTestProblem(num_shifts=False):
-    tstst = sorted(glob.glob("scheduling_problems/test_set/*.csv"))
+    tstst = sorted(glob.glob("scheduling_problems/test_set/shifts_extrahard_ratio_above/*.csv"))
 
     try:
         if num_shifts:
@@ -365,9 +389,9 @@ def testProbList(subset):
 
 # //// test data \\\\
 
-buildTestSet(n=27,min_shifts=19,max_shifts=23)
+buildTestSet(n=48,min_shifts=24,max_shifts=30,max_shifts_per_day=8,ratio=(3,5))
 
-#subdir='shifts_extrahard_ratio_mixed'
+#subdir='shifts_xxhard_ratio_above'
 
 tpi, sdf = testProblemIndex() #subdir=subdir)
 tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)

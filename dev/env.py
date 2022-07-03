@@ -44,7 +44,6 @@ class SchedulingEnv(Env):
         self.observation_space = Box(low=0, high=1, shape=(self.state.shape[0], self.state.shape[1]),\
                                      dtype=np.float64)
 
- 
     def step(self, action):
         """Step through the environment and implement action.
 
@@ -73,7 +72,11 @@ class SchedulingEnv(Env):
         if self.reward_type == 'Terminal':
             if done == True:
                 count_b2b_violation = self.evaluateSchedule()
-                reward = 1 - (count_b2b_violation / self.count_shifts)
+                reward = 1 - (count_b2b_violation / (self.count_shifts-1))
+
+                if count_b2b_violation > self.count_shifts-1:
+                    print("bug!")
+                    print(self.state)
             
             elif done == False:
                 reward = 0
@@ -85,7 +88,9 @@ class SchedulingEnv(Env):
             elif self.reward_step > 0:
                 count_b2b_violation = self.evaluateStep()
                 reward = (1/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
-                
+                if count_b2b_violation > 1:
+                    print("bug!!")
+                    print(self.state)               
 
         elif self.reward_type == 'Step_Bonus':
             if self.reward_step == 0:
@@ -94,12 +99,17 @@ class SchedulingEnv(Env):
             elif self.reward_step > 0:
                 count_b2b_violation = self.evaluateStep()
                 self.cummulative_violations += count_b2b_violation
-                reward = (.5/(self.count_shifts-1)) - (count_b2b_violation * (1/(self.count_shifts-1)))
+                reward = (.5/(self.count_shifts-1)) - (count_b2b_violation * (.5/(self.count_shifts-1)))
                 if self.reward_step == (self.count_shifts - 1) and self.cummulative_violations == 0:
                     reward += .5 
-                
+
+                if count_b2b_violation > 1:
+                    print("bug!!!")
+                    print(self.state) 
+
         self.cummulative_reward += reward
         self.reward_step += 1
+
         
         #if done:
             #print(f"episode reward: {self.cum_reward}")
