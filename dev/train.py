@@ -17,69 +17,75 @@ now = datetime.now().strftime("%m%d%H:%M")
 
 # parameters
 seeds= [10, 21, 31, 65, 91]
-seed=seeds[3]
-random.seed(seed)
-torch.manual_seed(seed)
+
 max_shifts = 8
 n_episodes = 10000
 print_every=100
-reward_type = 'Step' # 'Terminal' 'Step' 'Step_Bonus'
+reward_type = ['Terminal', 'Step'] #, 'Step_Bonus']
 problem_batch = problemLoader(max_shifts)
 print(f"unique problems: {len(problem_batch)}")
-filename = f"{now}_seed{seed}_eps{n_episodes}_ms{max_shifts}_batchlen{len(problem_batch)}_rt{reward_type}"
+
  #f"Random_" 
 
+for rt in reward_type:
+  print(rt)
+  # model
 
-# model
-device = torch.device("cpu") #"cuda:0" if torch.cuda.is_available() else "cpu")
-encoder = Encoder(32, 32, 32)
-decoder = Decoder()
-policy = Policy(encoder, decoder).to(device)
+  for seed in seeds:
+    random.seed(seed)
+    torch.manual_seed(seed)
 
-optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
-agent = reinforce(policy, optimizer, reward_type, max_t=1000,gamma=1)
-#agent = randomAgent()
+    filename = f"{now}_seed{seed}_eps{n_episodes}_ms{max_shifts}_batchlen{len(problem_batch)}_rt{rt}"
 
-# experiments
-models_dir = f'models/{filename}'
-logdir = f'logs/{filename}'
+    device = torch.device("cpu") #"cuda:0" if torch.cuda.is_available() else "cpu")
+    encoder = Encoder(32, 32, 32)
+    decoder = Decoder()
+    policy = Policy(encoder, decoder).to(device)
 
-if not os.path.exists(models_dir):
-  os.makedirs(models_dir)
+    optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
+    agent = reinforce(policy, optimizer, reward_type=rt, max_t=1000,gamma=1)
+    #agent = randomAgent()
 
-if not os.path.exists(logdir):
-  os.makedirs(logdir)
+    # experiments
+    models_dir = f'models/{filename}'
+    logdir = f'logs/{filename}'
 
-writer = SummaryWriter(log_dir=logdir)
+    if not os.path.exists(models_dir):
+      os.makedirs(models_dir)
 
-scores_deque = deque(maxlen=100)
-scores = []
-problog = []
-avg_scores = []
+    if not os.path.exists(logdir):
+      os.makedirs(logdir)
 
-for e in range(1, n_episodes):
-    problem = random.choice(problem_batch)
-    # problem_batch.pop(prob)
-    problog.append(problem)
+    writer = SummaryWriter(log_dir=logdir)
 
-    rewards, policy_loss = agent.run(problem, e, print_every)
-    writer.add_scalar("Loss/train", policy_loss, e)
-    writer.add_scalar("reward", rewards, e)
-    writer.add_scalar("avg_reward", np.mean(scores_deque), e)
+    scores_deque = deque(maxlen=100)
+    scores = []
+    problog = []
+    avg_scores = []
 
-    # Calculate total expected reward
-    scores_deque.append(rewards)
-    scores.append(rewards)
-    avg_scores.append(np.mean(scores_deque))
+    for e in range(1, n_episodes):
+      problem = random.choice(problem_batch)
+      # problem_batch.pop(prob)
+      problog.append(problem)
 
-    if e % print_every == 0:
-        print('Episode {}\tAverage Score: {:.2f}'.format(e, np.mean(scores_deque)))
-        
-        torch.save(policy.state_dict(), f"{models_dir}/{e}.pth") # 'model_weights.pth')
+      rewards, policy_loss = agent.run(problem, e, print_every)
+      writer.add_scalar("Loss/train", policy_loss, e)
+      writer.add_scalar("reward", rewards, e)
+      writer.add_scalar("avg_reward", np.mean(scores_deque), e)
 
-writer.flush()
-writer.close()       
+      # Calculate total expected reward
+      scores_deque.append(rewards)
+      scores.append(rewards)
+      avg_scores.append(np.mean(scores_deque))
 
-data = pd.DataFrame.from_dict({'avg_scores':avg_scores, 'scores':scores, 'prob':problog})
-data.to_csv(f"run_data/{filename}.csv",index=False)
+      if e % print_every == 0:
+          print('Episode {}\tAverage Score: {:.2f}'.format(e, np.mean(scores_deque)))
+          
+          torch.save(policy.state_dict(), f"{models_dir}/{e}.pth") # 'model_weights.pth')
+
+    writer.flush()
+    writer.close()       
+
+    data = pd.DataFrame.from_dict({'avg_scores':avg_scores, 'scores':scores, 'prob':problog})
+    data.to_csv(f"run_data/{filename}.csv",index=False)
 

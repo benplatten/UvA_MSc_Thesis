@@ -150,7 +150,7 @@ def randomSchedule(n=1, min_shifts=2,max_shifts=16, max_shifts_per_day=4):
         print(f"schedule_00{id} saved.")
 
 def empGen(num_shifts,num_emps=False,ratio=False):
-    print("running empGen")
+    #print("running empGen")
     if ratio:
         #e.g (3,5)
         lower= round(num_shifts / ratio[1])
@@ -179,11 +179,11 @@ def empGen(num_shifts,num_emps=False,ratio=False):
             for i in range(e):
                 employee_id.append(''.join(np.random.randint(9,size=(6)).astype('str')))
     
-    print("empGen finished")
+    #print("empGen finished")
     return employee_id
 
 def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=False,ratio=False):
-    print('running randomProblem')
+    #print('running randomProblem')
     # shift_id
     n = random.randint(min_shifts, max_shifts)
     shift_id = list(range(0, n))
@@ -231,15 +231,14 @@ def randomProblem(min_shifts=2,max_shifts=15, max_shifts_per_day=4,num_emps=Fals
     schedule = pd.DataFrame(scheduleDic)
     pool = pd.DataFrame({'employee_id':employee_id})
     
-    print('randomProblem finished')
+    #print('randomProblem finished')
     return schedule, pool
         
 def buildTestSet(n,min_shifts,max_shifts,max_shifts_per_day=4,num_emps=False,ratio=False):
 
-    print(f"max_shifts_per_day:{max_shifts_per_day}")
     i = 0
     while i < n:
-        print(i)
+        #print(i)
         try:
             schedule, pool = randomProblem(min_shifts=min_shifts,max_shifts=max_shifts,max_shifts_per_day=max_shifts_per_day,num_emps=num_emps,ratio=ratio)
 
@@ -389,12 +388,12 @@ def testProbList(subset):
 
 # //// test data \\\\
 
-buildTestSet(n=48,min_shifts=24,max_shifts=30,max_shifts_per_day=8,ratio=(3,5))
+#buildTestSet(n=50,min_shifts=24,max_shifts=30,max_shifts_per_day=8) #,ratio=(3,5))
 
-#subdir='shifts_xxhard_ratio_above'
+#subdir='shifts_xxhard_ratio_mixed'
 
-tpi, sdf = testProblemIndex() #subdir=subdir)
-tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)
+# tpi, sdf = testProblemIndex() #subdir=subdir)
+# tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)
 #sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
 
 # loadTestProblem(num_shifts=5)

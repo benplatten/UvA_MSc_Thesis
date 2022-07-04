@@ -17,27 +17,35 @@ import random
 # above mean (hard)
 
 test_sets = ['shifts_easy_ratio_mixed','shifts_medium_ratio_mixed','shifts_hard_ratio_mixed','shifts_extrahard_ratio_mixed',
-            'shifts_easy_ratio_above','shifts_medium_ratio_above','shifts_hard_ratio_above','shifts_extrahard_ratio_above']
+            'shifts_easy_ratio_above','shifts_medium_ratio_above','shifts_hard_ratio_above','shifts_extrahard_ratio_above',
+            'shifts_xxhard_ratio_mixed','shifts_xxhard_ratio_above']
 
 shifts_easy_ratio_mixed = testProbList('shifts_easy_ratio_mixed')
 shifts_medium_ratio_mixed = testProbList('shifts_medium_ratio_mixed')
 shifts_hard_ratio_mixed = testProbList('shifts_hard_ratio_mixed')
 shifts_extrahard_ratio_mixed = testProbList('shifts_extrahard_ratio_mixed')
+shifts_xxhard_ratio_mixed = testProbList('shifts_xxhard_ratio_mixed')
 shifts_easy_ratio_above = testProbList('shifts_easy_ratio_above')
 shifts_medium_ratio_above = testProbList('shifts_medium_ratio_above')
 shifts_hard_ratio_above = testProbList('shifts_hard_ratio_above')
 shifts_extrahard_ratio_above = testProbList('shifts_extrahard_ratio_above')
+shifts_xxhard_ratio_above = testProbList('shifts_xxhard_ratio_above')
 
 for i in test_sets:
     print(f"{i}: {len(eval(i))}")
 
-#test_sets = ['shifts_extrahard_ratio_mixed'] #'shifts_easy_ratio_mixed','shifts_medium_ratio_mixed','shifts_hard_ratio_mixed','shifts_extrahard_ratio_mixed']
+#test_sets = ['shifts_xxhard_ratio_mixed'] #'shifts_easy_ratio_mixed','shifts_medium_ratio_mixed','shifts_hard_ratio_mixed','shifts_extrahard_ratio_mixed']
 
 
 ### MODELS 
 policy_method = 'max' # 'sample'
 models_dir = 'test_models/'
-model_files = ['terminal_8'] #['stepbonus_8','step_8','terminal_8', 'random_0'] 
+model_files =['stepbonus_8','step_8','terminal_8', 'random_0'] # ['terminal_8'] #
+
+model_files =['stepbonus_8_10','stepbonus_8_10','stepbonus_8_10','stepbonus_8_10','stepbonus_8_10',
+              'step_8','step_8','step_8','step_8','step_8',
+              'terminal_8', 'terminal_8', 'terminal_8', 'terminal_8', 'terminal_8', 
+              'random_0']
 
 
 ### SEEDS
