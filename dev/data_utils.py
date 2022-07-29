@@ -388,12 +388,12 @@ def testProbList(subset):
 
 # //// test data \\\\
 
-#buildTestSet(n=50,min_shifts=24,max_shifts=30,max_shifts_per_day=8) #,ratio=(3,5))
+#buildTestSet(n=50,min_shifts=41,max_shifts=60,max_shifts_per_day=10,ratio=(3,5))
 
-#subdir='shifts_xxhard_ratio_mixed'
+# #subdir='shifts_xxxxhard_ratio_mixed'
 
-# tpi, sdf = testProblemIndex() #subdir=subdir)
-# tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)
-#sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
+#tpi, sdf = testProblemIndex() #subdir=subdir)
+#tpi.to_csv(f'scheduling_problems/testproblemindex.csv',index=False) #(f'scheduling_problems/testproblemindex_{subdir}.csv',index=False)
+# sdf.to_csv('scheduling_problems/testproblemsummary.csv',index=True)
 
 # loadTestProblem(num_shifts=5)

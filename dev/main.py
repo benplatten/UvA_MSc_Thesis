@@ -15,26 +15,20 @@ s = "schedule_0001"
 pool, schedule = pd.read_csv(f'scheduling_problems/pools/{p}.csv',dtype={'employee_id':'str'}), \
                  pd.read_csv(f'scheduling_problems/schedules/{s}.csv',dtype={'shift_id':'str'})
 
-print(pool)
-print(schedule)
+# print(pool)
+# print(schedule)
 
 schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
 schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])
 
 
-env = SchedulingEnv(pool, schedule, reward_type='Step_Bonus')
+env = SchedulingEnv(pool, schedule, reward_type='Terminal')
 
-#print(env.shift_features)
-#print(env.count_shifts)
-#print(env.count_workers)
-print(env.state) 
-#print(env.action_space.sample())
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-# encoder = Encoder(env.shift_features, env.count_workers, 32, 32, 32)
-# decoder = Decoder(env.count_shifts)
-# policy = Policy(encoder, decoder).to(device)
+encoder = Encoder(env.shift_features, env.count_workers, 32, 32, 32)
+decoder = Decoder(env.count_shifts)
+policy = Policy(encoder, decoder).to(device)
 
 # optimizer = optim.Adam(policy.parameters(), lr=1e-3) # 1e-2
 # agent = reinforce(policy, optimizer,max_t=1000,gamma=1)
@@ -46,3 +40,8 @@ print(env.state)
 
 
  
+#print(env.shift_features)
+#print(env.count_shifts)
+#print(env.count_workers)
+#print(env.state) 
+#print(env.action_space.sample())

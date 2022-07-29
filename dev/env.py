@@ -77,9 +77,10 @@ class SchedulingEnv(Env):
                 if count_b2b_violation > self.count_shifts-1:
                     print("bug!")
                     print(self.state)
-            
+                            
             elif done == False:
                 reward = 0
+
 
         elif self.reward_type == 'Step':
             if self.reward_step == 0:

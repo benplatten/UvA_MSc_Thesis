@@ -16,24 +16,23 @@ warnings.filterwarnings("ignore")
 now = datetime.now().strftime("%m%d%H:%M")
 
 # parameters
-seeds= [10, 21, 31, 65, 91]
+seeds= [10,21,65,100,999]
 
-max_shifts = 8
+max_shifts = 14
 n_episodes = 10000
 print_every=100
-reward_type = ['Terminal', 'Step'] #, 'Step_Bonus']
+reward_type = ['Step', 'Terminal','Step_Bonus']
 problem_batch = problemLoader(max_shifts)
 print(f"unique problems: {len(problem_batch)}")
 
- #f"Random_" 
+for seed in seeds:
+  print(seed)
+  random.seed(seed)
+  torch.manual_seed(seed)
 
-for rt in reward_type:
-  print(rt)
-  # model
-
-  for seed in seeds:
-    random.seed(seed)
-    torch.manual_seed(seed)
+  for rt in reward_type:
+    print(rt)
+    # model
 
     filename = f"{now}_seed{seed}_eps{n_episodes}_ms{max_shifts}_batchlen{len(problem_batch)}_rt{rt}"
 
@@ -65,17 +64,18 @@ for rt in reward_type:
 
     for e in range(1, n_episodes):
       problem = random.choice(problem_batch)
+      #print(problem)
       # problem_batch.pop(prob)
       problog.append(problem)
 
-      rewards, policy_loss = agent.run(problem, e, print_every)
+      reward, policy_loss = agent.run(problem, e, print_every)
       writer.add_scalar("Loss/train", policy_loss, e)
-      writer.add_scalar("reward", rewards, e)
+      writer.add_scalar("reward", reward, e)
       writer.add_scalar("avg_reward", np.mean(scores_deque), e)
 
       # Calculate total expected reward
-      scores_deque.append(rewards)
-      scores.append(rewards)
+      scores_deque.append(reward)
+      scores.append(reward)
       avg_scores.append(np.mean(scores_deque))
 
       if e % print_every == 0:

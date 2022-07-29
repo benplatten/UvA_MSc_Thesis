@@ -88,6 +88,8 @@ class reinforce():
 
             env = SchedulingEnv(pool, schedule, self.reward_type)
 
+            
+
             #print(f"episode: {e}")
             saved_log_probs = []
             rewards = []
@@ -155,7 +157,6 @@ class reinforce():
             return sum(rewards)
 
 
-
 class randomAgent():
     def run(self, problem, e, print_every):  
 
@@ -191,7 +192,7 @@ class randomAgent():
                     
             return sum(rewards), 0
 
-    def solve(self, pool, schedule):
+    def solve(self, pool, schedule, method):
 
             schedule['shift_day_of_week'] = schedule['shift_day_of_week'].replace(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],[1, 2, 3, 4, 5])
             schedule['shift_type'] = schedule['shift_type'].replace(['Morning', 'Evening'],[1, 2])

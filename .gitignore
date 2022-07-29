@@ -6,8 +6,10 @@ dev/scheduling_problems/test_set/
 dev/tempCodeRunnerFile.py
 dev/logs/
 dev/models/
+dev/test_data/
 dev/test_models/
 dev/run_data/
+Notebooks/eda/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
