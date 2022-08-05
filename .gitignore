@@ -9,7 +9,10 @@ dev/models/
 dev/test_data/
 dev/test_models/
 dev/run_data/
-Notebooks/eda/
+notebooks/eda/
+notebooks/archive/
+Reports/
+Reports
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
